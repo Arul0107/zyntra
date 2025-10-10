@@ -8,7 +8,7 @@ const app = express();
 // ✅ Middleware
 app.use(cors());
 const corsOptions = {
-    origin: ["https://vrismcrmfrontend.vercel.app"],
+    origin: ["https://vrismcrm.netlify.app"],
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
