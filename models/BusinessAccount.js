@@ -40,7 +40,9 @@ const businessAccountSchema = new mongoose.Schema({
     pincode: { type: Number },
     website: { type: String },
     sourceType: { type: String, default: 'Direct' },
-    typeOfLead: [{ type: String, enum: ['Regular', 'Government', 'Occupational', 'Revenue'] }],
+    
+
+    typeOfLead: [{ type: String, enum: ['Fixed client', 'Revenue based client', 'Vrism Product',"Occupational"] }],
     status: {
         type: String,
         enum: ['Active', 'Pipeline', 'Quotations', 'Customer', 'Closed', 'TargetLeads'],
