@@ -21,5 +21,7 @@ router.delete('/:id', userController.deleteUser);
 
 // Transfer a user
 router.put('/transfer/:id', userController.transferUser);
+// Update presence status
+router.post('/status/update', userController.updateStatus);
 
 module.exports = router;

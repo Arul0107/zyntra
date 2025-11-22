@@ -159,3 +159,36 @@ exports.transferUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+
+// @desc Update User Presence (Online / Offline / Busy / Away / In Meeting)
+exports.updateStatus = async (req, res) => {
+  try {
+    const { userId, presence } = req.body;
+
+    if (!userId || !presence)
+      return res.status(400).json({ message: "userId & presence required" });
+
+    const valid = ["online", "offline", "busy", "away", "in_meeting"];
+    if (!valid.includes(presence))
+      return res.status(400).json({ message: "Invalid presence type" });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        presence,
+        lastActiveAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!updatedUser)
+      return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "Presence updated", user: updatedUser });
+
+  } catch (err) {
+    console.error("Presence update error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
