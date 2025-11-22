@@ -1,44 +1,63 @@
-const mongoose = require('mongoose');
+// models/User.js
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-
   name: { type: String, required: true, trim: true },
-
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-
   mobile: { type: String, trim: true },
-
   password: { type: String, required: true },
 
   role: {
     type: String,
-    enum: ['Superadmin', 'Admin', 'Team Leader', 'Employee'],
-    default: 'Employee'
+    enum: ["Superadmin", "Admin", "Team Leader", "Employee"],
+    default: "Employee",
   },
 
-  // ✔ Old status kept (Active / Inactive)
   status: {
     type: String,
-    enum: ['Active', 'Inactive'],
-    default: 'Active'
+    enum: ["Active", "Inactive"],
+    default: "Active",
   },
 
-  // 🟢 NEW PRESENCE FIELD (Teams style)
+  /* =========================================
+      PRESENCE FIELDS
+  ========================================== */
   presence: {
     type: String,
-    enum: ['online', 'offline', 'busy', 'away', 'in_meeting'],
-    default: 'offline'
+    enum: ["online", "offline", "busy", "away", "in_meeting"],
+    default: "offline",
+  },
+
+  previousPresence: {
+    type: String,
+    enum: ["online", "offline", "busy", "away", "in_meeting", null],
+    default: "offline",
+  },
+
+  /* =========================================
+      LAST SEEN + LAST ACTIVE
+  ========================================== */
+  lastSeen: {
+    type: Date,
+    default: null,
   },
 
   lastActiveAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
 
-  department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', default: null },
+  /* =========================================
+      NEW FIELD — LAST MESSAGE TIME
+      REQUIRED FOR CHAT SORTING
+  ========================================== */
+  lastMessageAt: {
+    type: Date,
+    default: null,
+  },
 
-  team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', default: null }
-
+  department: { type: mongoose.Schema.Types.ObjectId, ref: "Department", default: null },
+  team: { type: mongoose.Schema.Types.ObjectId, ref: "Team", default: null },
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

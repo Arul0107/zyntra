@@ -1,27 +1,22 @@
 // routes/userRoutes.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const userController = require('../controllers/userController');
+const userController = require("../controllers/userController");
 
-// Get all users
-router.get('/', userController.getAllUsers);
+// 🔥 Normal User APIs
+router.get("/", userController.getAllUsers);
+router.get("/:id", userController.getSingleUser);
+router.post("/", userController.createUser);
+router.put("/:id", userController.updateUser);
+router.delete("/:id", userController.deleteUser);
 
-// Get a single user by ID
-router.get('/:id', userController.getSingleUser);
+// 🔥 Transfer user
+router.put("/transfer/:id", userController.transferUser);
 
+// 🔥 Presence update
+router.post("/status/update", userController.updateStatus);
 
-// Create a new user
-router.post('/', userController.createUser);
-
-// Update an existing user
-router.put('/:id', userController.updateUser);
-
-// Delete a user
-router.delete('/:id', userController.deleteUser);
-
-// Transfer a user
-router.put('/transfer/:id', userController.transferUser);
-// Update presence status
-router.post('/status/update', userController.updateStatus);
+// 🔥 Chat Sorted User List (WhatsApp Style Sorting)
+router.get("/chat/list", userController.getChatSortedUsers);
 
 module.exports = router;
