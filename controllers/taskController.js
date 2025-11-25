@@ -5,7 +5,7 @@ const populationFields = [
   { path: "assignedTo", select: "name email role" },
   { path: "assignedBy", select: "name email role" },
   { path: "accountId", select: "businessName contactName" },
-  { path: "serviceId", select: "serviceName category basePrice" }
+  { path: "serviceId", select: "serviceName category basePrice accountId" }
 ];
 
 exports.getTasks = async (req, res) => {
@@ -15,6 +15,7 @@ exports.getTasks = async (req, res) => {
       assignedBy,
       status,
       accountId,
+      serviceId,
       search,
       startDate,
       endDate,
@@ -24,18 +25,24 @@ exports.getTasks = async (req, res) => {
 
     const filter = {};
 
+    // 🔥 EXACT MATCH FILTERS
     if (assignedTo) filter.assignedTo = assignedTo;
     if (assignedBy) filter.assignedBy = assignedBy;
     if (status) filter.status = status;
     if (accountId) filter.accountId = accountId;
+    if (serviceId) filter.serviceId = serviceId;
 
+    // 🔍 SEARCH MATCH (supports all fields)
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } }
+        { description: { $regex: search, $options: "i" } },
+        { reason: { $regex: search, $options: "i" } },
+        { timeRequired: { $regex: search, $options: "i" } }
       ];
     }
 
+    // 📅 DATE FILTER
     if (startDate || endDate) {
       filter.assignedDate = {};
       if (startDate) filter.assignedDate.$gte = new Date(startDate);
@@ -44,6 +51,7 @@ exports.getTasks = async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
+    // 🔥 FETCH WITH POPULATION
     const tasks = await Task.find(filter)
       .populate(populationFields)
       .sort({ createdAt: -1 })
@@ -58,6 +66,7 @@ exports.getTasks = async (req, res) => {
       limit: Number(limit),
       tasks
     });
+
   } catch (err) {
     console.error("getTasks error:", err);
     res.status(500).json({ message: "Error fetching tasks." });
@@ -67,8 +76,12 @@ exports.getTasks = async (req, res) => {
 exports.getTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate(populationFields);
-    if (!task) return res.status(404).json({ message: "Task not found." });
+
+    if (!task)
+      return res.status(404).json({ message: "Task not found." });
+
     res.json(task);
+
   } catch (err) {
     console.error("getTask error:", err);
     res.status(500).json({ message: "Error fetching task." });
@@ -77,19 +90,24 @@ exports.getTask = async (req, res) => {
 
 exports.createTask = async (req, res) => {
   try {
-    const task = new Task(req.body);
+    const task = new Task(req.body); 
     await task.save();
+
     const populated = await Task.findById(task._id).populate(populationFields);
     res.status(201).json(populated);
+
   } catch (err) {
     console.error("createTask error:", err);
-    res.status(400).json({ message: "Error creating task.", error: err.message });
+    res.status(400).json({
+      message: "Error creating task.",
+      error: err.message
+    });
   }
 };
 
 exports.updateTask = async (req, res) => {
   try {
-    // keep assignedBy if not provided
+    // keep assignedBy if not included
     if (!req.body.assignedBy) {
       const old = await Task.findById(req.params.id);
       if (old) req.body.assignedBy = old.assignedBy;
@@ -101,19 +119,29 @@ exports.updateTask = async (req, res) => {
       { new: true, runValidators: true }
     ).populate(populationFields);
 
-    if (!updated) return res.status(404).json({ message: "Task not found." });
+    if (!updated)
+      return res.status(404).json({ message: "Task not found." });
+
     res.json(updated);
+
   } catch (err) {
     console.error("updateTask error:", err);
-    res.status(400).json({ message: "Error updating task.", error: err.message });
+    res.status(400).json({
+      message: "Error updating task.",
+      error: err.message
+    });
   }
 };
 
 exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
-    if (!task) return res.status(404).json({ message: "Task not found." });
+
+    if (!task)
+      return res.status(404).json({ message: "Task not found." });
+
     res.json({ message: "Task deleted." });
+
   } catch (err) {
     console.error("deleteTask error:", err);
     res.status(500).json({ message: "Error deleting task." });

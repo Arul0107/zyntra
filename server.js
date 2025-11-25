@@ -21,7 +21,10 @@ app.use(express.json());
 
 /* -------------------------------------------------
    ⭐ ROUTES
+
 -------------------------------------------------- */
+app.use("/api/events", require("./routes/eventRoutes"));
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/departments", require("./routes/departmentRoutes"));
 app.use("/api/teams", require("./routes/teamRoutes"));
@@ -34,6 +37,7 @@ app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/work-sessions", require("./routes/workSessionRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/credentials", require("./routes/credentialRoutes"));
+app.use("/api/access", require("./routes/userAccessRoutes"));
 
 /* ======================================================
    ⭐⭐ CHAT API ROUTE
