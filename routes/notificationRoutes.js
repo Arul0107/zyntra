@@ -1,14 +1,14 @@
-const express = require("express");
-const router = express.Router();
-const notificationController = require("../controllers/notificationController"); // Adjust path as needed
+const router = require("express").Router();
+const {
+  getNotificationsByUser,
+  markAsRead,
+  deleteNotification,
+  createNotification,
+} = require("../controllers/notificationController");
 
-// 🔔 GET /api/notifications/:userId - Fetch all notifications for a user
-router.get("/:userId", notificationController.getUserNotifications);
-
-// 🟢 POST /api/notifications/read - Mark multiple notifications as read
-router.post("/read", notificationController.markAsRead);
-
-// 🔴 DELETE /api/notifications/:notificationId - Delete a specific notification
-router.delete("/:notificationId", notificationController.deleteNotification);
+router.post("/", createNotification);
+router.get("/:userId", getNotificationsByUser);
+router.post("/read", markAsRead);
+router.delete("/:id", deleteNotification);
 
 module.exports = router;

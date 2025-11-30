@@ -1,50 +1,96 @@
-    const Notification = require("../models/Notification"); // <-- Assuming this model exists
-const dayjs = require("dayjs");
+// controllers/notificationController.js
+const Notification = require("../models/Notification");
 
-// 🔔 Get all notifications for a specific user
-exports.getUserNotifications = async (req, res) => {
+exports.createNotification = async (req, res) => {
   try {
-    const { userId } = req.params;
-    
-    // Fetch notifications for the user, sorting by newest first
-    const notifications = await Notification.find({ userId })
-      .sort({ createdAt: -1 }) // Newest first
-      .limit(50); // Limit to last 50 for performance
+    const { userId, fromUserId, message, type } = req.body;
 
-    res.status(200).json({ notifications });
+    const notification = await Notification.create({
+      user: userId,
+      fromUser: fromUserId || null,
+      message,
+      type: type || "message", // default to "message" so enum doesn't break
+      read: false,
+    });
+
+    // 🔥 Real-time push through WebSocket to RECEIVER's room
+    if (global._io) {
+      global._io.to(userId.toString()).emit("new_notification", {
+        _id: notification._id,
+        user: notification.user,
+        fromUser: fromUserId,
+        message: notification.message,
+        type: notification.type,
+        createdAt: notification.createdAt,
+      });
+    }
+
+    res.status(201).json(notification);
   } catch (err) {
-    console.error("Error fetching notifications:", err);
-    res.status(500).json({ message: "Failed to fetch notifications" });
+    console.error("createNotification error:", err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-// 🟢 Mark notifications as read
-exports.markAsRead = async (req, res) => {
-    try {
-        const { notificationIds } = req.body;
+exports.getNotificationsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
 
-        await Notification.updateMany(
-            { _id: { $in: notificationIds } },
-            { $set: { read: true } }
-        );
+    const notifications = await Notification.find({ user: userId })
+      .populate("fromUser", "name email")
+      .sort({ createdAt: -1 });
 
-        res.status(200).json({ message: "Notifications marked as read" });
-    } catch (err) {
-        console.error("Error marking notifications as read:", err);
-        res.status(500).json({ message: "Failed to mark notifications as read" });
-    }
+    res.json({ notifications });
+  } catch (err) {
+    console.error("getNotificationsByUser error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// 🔴 Delete a notification
-exports.deleteNotification = async (req, res) => {
-    try {
-        const { notificationId } = req.params;
-        
-        await Notification.findByIdAndDelete(notificationId);
-        
-        res.status(200).json({ message: "Notification deleted successfully" });
-    } catch (err) {
-        console.error("Error deleting notification:", err);
-        res.status(500).json({ message: "Failed to delete notification" });
+exports.markAsRead = async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+
+    if (!notificationIds || !notificationIds.length) {
+      return res.json({ message: "Nothing to update" });
     }
+
+    // Update all as read
+    await Notification.updateMany(
+      { _id: { $in: notificationIds } },
+      { $set: { read: true } }
+    );
+
+    // Find which users were affected (usually only 1 user)
+    const affected = await Notification.find({ _id: { $in: notificationIds } }).select("user");
+    const userIds = [...new Set(affected.map(n => n.user.toString()))];
+
+    // 🔁 Let frontend reload counts for each affected user
+    if (global._io) {
+      userIds.forEach(uid => {
+        global._io.to(uid).emit("notifications_updated");
+      });
+    }
+
+    res.json({ message: "Marked as read" });
+  } catch (err) {
+    console.error("markAsRead error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const notif = await Notification.findByIdAndDelete(req.params.id);
+
+    if (notif && global._io) {
+      // After delete, notify this user to refresh notifications
+      global._io.to(notif.user.toString()).emit("notifications_updated");
+    }
+
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error("deleteNotification error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
