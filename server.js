@@ -18,7 +18,7 @@ const app = express();
 
 /* ⭐ CORS */
 app.use(cors({
-  origin: ["https://vrismcrm.netlify.app", "http://localhost:5173"],
+  origin: ["https://vrismcrm.netlify.app", "http://localhost:5173","https://crm.vrismcloud.com"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
 }));
