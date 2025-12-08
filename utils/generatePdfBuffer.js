@@ -9,7 +9,7 @@ const generatePdfBuffer = (quotation) => {
     doc.on('end', () => {
       resolve(Buffer.concat(buffers));
     });
-
+// Header
     doc.fontSize(20).text('Quotation', { align: 'center' });
     doc.text(`Quotation #: ${quotation.quotationNumber}`);
     doc.text(`Customer: ${quotation.customerName}`);
