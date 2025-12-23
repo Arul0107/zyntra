@@ -70,7 +70,7 @@ const businessAccountSchema = new mongoose.Schema(
     pincode: Number,
     website: String,
 
-    typeOfLead: [{ type: String, enum: ['Fixed client', 'Revenue based client', 'Vrism Product',"others"] }],
+    typeOfLead: [{ type: String, enum: ['Fixed client', 'Revenue based client', 'zyntra Product',"others"] }],
 
     status: {
       type: String,
